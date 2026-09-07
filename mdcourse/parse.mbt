@@ -29,7 +29,7 @@ pub async fn parse_file(input_path : String, output_dir : String) -> Bool {
     let ssml = extract_ssml_simple(page_without_videos)
     let has_audio = !ssml.is_empty()
     let ssml_hash = if has_audio { hash_content(ssml) } else { "" }
-    slides.push({ id: slide_id, ssml_hash, has_audio })
+    slides.push({ id: slide_id, ssml_hash, has_audio, })
 
     // Save slide SSML if present
     if has_audio {
@@ -75,7 +75,7 @@ pub async fn parse_file(input_path : String, output_dir : String) -> Bool {
   }
 
   // Create manifest
-  let manifest : Manifest = { slides, videos }
+  let manifest : Manifest = { slides, videos, }
 
   // Save manifest as JSON
   let manifest_file = manifest_path(output_dir)
@@ -93,7 +93,7 @@ fn split_pages_simple(content : String) -> Array[String] {
   let result : Array[String] = []
   let lines : Array[String] = []
   for view in content.split("\n") {
-    lines.push(view.to_string())
+    lines.push(view.to_owned())
   }
 
   // Check if headingDivider: 1 is in frontmatter
@@ -172,7 +172,7 @@ fn extract_ssml_simple(page : String) -> String {
   let mut in_ssml = false
   let lines : Array[String] = []
   for view in page.split("\n") {
-    lines.push(view.to_string())
+    lines.push(view.to_owned())
   }
   for line in lines {
     let trimmed = line.trim(char_set=" \t")
@@ -188,7 +188,7 @@ fn extract_ssml_simple(page : String) -> String {
       result = result + line + "\n"
     }
   }
-  result.trim(char_set=" \t\n").to_string()
+  result.trim(char_set=" \t\n").to_owned()
 }
 
 ///|
@@ -207,7 +207,7 @@ fn extract_videos(page : String) -> (Array[VideoInfo], String) {
   // - <!-- video path.mp4 ssml\n...\n--> (with SSML)
   let lines : Array[String] = []
   for view in page.split("\n") {
-    lines.push(view.to_string())
+    lines.push(view.to_owned())
   }
   let videos : Array[VideoInfo] = []
   let mut current_video_path = ""
@@ -224,13 +224,12 @@ fn extract_videos(page : String) -> (Array[VideoInfo], String) {
       // Extract video path from: <!-- video path.mp4 ssml
       let start = "<!-- video ".length()
       let end = trimmed.length() - " ssml".length()
-      let slice_result = try? trimmed[start:end]
-      guard slice_result is Ok(slice) else {
+      guard start <= end else {
         i += 1
         continue
       }
-      let path_str = slice.to_string()
-      current_video_path = path_str.trim(char_set=" \t").to_string()
+      let path_str = trimmed[start:end].to_owned()
+      current_video_path = path_str.trim(char_set=" \t").to_owned()
       current_video_ssml = ""
       in_video_ssml = true
       i += 1
@@ -242,14 +241,13 @@ fn extract_videos(page : String) -> (Array[VideoInfo], String) {
       // Extract video path: <!-- video path.mp4 -->
       let start = "<!-- video ".length()
       let end = trimmed.length() - " -->".length()
-      let slice_result = try? trimmed[start:end]
-      guard slice_result is Ok(slice) else {
+      guard start <= end else {
         i += 1
         continue
       }
-      let path_str = slice.to_string()
-      let video_path = path_str.trim(char_set=" \t").to_string()
-      videos.push({ path: video_path, ssml: "" })
+      let path_str = trimmed[start:end].to_owned()
+      let video_path = path_str.trim(char_set=" \t").to_owned()
+      videos.push({ path: video_path, ssml: "", })
       i += 1
       continue
     }
@@ -260,7 +258,7 @@ fn extract_videos(page : String) -> (Array[VideoInfo], String) {
         // End of SSML block - save video
         videos.push({
           path: current_video_path,
-          ssml: current_video_ssml.trim(char_set=" \t\n").to_string(),
+          ssml: current_video_ssml.trim(char_set=" \t\n").to_owned(),
         })
         current_video_path = ""
         current_video_ssml = ""
@@ -291,10 +289,10 @@ pub fn get_course_name_from_path(input_file : String) -> String {
   let mut base_name = file_name
   if base_name.has_suffix(".mbt.md") {
     let len = base_name.length()
-    base_name = base_name[0:len - 7].to_string() catch { _ => base_name }
+    base_name = base_name[0:len - 7].to_owned()
   } else if base_name.has_suffix(".md") {
     let len = base_name.length()
-    base_name = base_name[0:len - 3].to_string() catch { _ => base_name }
+    base_name = base_name[0:len - 3].to_owned()
   }
 
   // Use the base filename as the target directory name
@@ -304,3 +302,6 @@ pub fn get_course_name_from_path(input_file : String) -> String {
   //   slides.md -> target/slides/
   base_name
 }
+
+///|
+extend Manifest with ToJson::{to_json}

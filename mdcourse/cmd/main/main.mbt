@@ -1,7 +1,7 @@
 ///|
 /// Main entry point for mdcourse CLI
 async fn main {
-  let cli_args = @sys.get_cli_args()
+  let cli_args = @env.args()
 
   // Define CLI arguments
   let parser = @clap.Parser::new(
@@ -63,14 +63,14 @@ async fn main {
 
   // Get input file (positional argument)
   let input_file : String = value.get_positional()[0] catch {
-    e => {
-      println("Error: \{e}")
-      println("")
-      println("Usage: mdcourse <input.mbt.md> [options]")
-      println("Run 'mdcourse --help' for full help")
-      return
+      e => {
+        println("Error: \{e}")
+        println("")
+        println("Usage: mdcourse <input.mbt.md> [options]")
+        println("Run 'mdcourse --help' for full help")
+        return
+      }
     }
-  }
 
   // Get flags
   let parse_only = value.get_flag("parse-only").unwrap_or(false)
@@ -98,14 +98,10 @@ async fn main {
       // Derive output filename from input: lec7-1.mbt.md -> lec7-1.mp4
       let base = if input_file.has_suffix(".mbt.md") {
         let len = input_file.length()
-        input_file[0:len - 7].to_string() catch {
-          _ => input_file
-        }
+        input_file[0:len - 7].to_owned()
       } else if input_file.has_suffix(".md") {
         let len = input_file.length()
-        input_file[0:len - 3].to_string() catch {
-          _ => input_file
-        }
+        input_file[0:len - 3].to_owned()
       } else {
         input_file
       }
@@ -114,13 +110,13 @@ async fn main {
   }
 
   // Parse numeric values
-  let fps = @strconv.parse_int(fps_str) catch {
+  let fps = @string.parse_int(fps_str) catch {
     _ => {
       println("Error: Invalid fps value: \{fps_str}")
       return
     }
   }
-  let default_duration = @strconv.parse_double(default_duration_str) catch {
+  let default_duration = @string.parse_double(default_duration_str) catch {
     _ => {
       println("Error: Invalid default-duration value: \{default_duration_str}")
       return

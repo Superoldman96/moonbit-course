@@ -2,21 +2,21 @@
 package "Milky2018/mdcourse"
 
 // Values
-async fn compose_video(String, String?, Options) -> Bool
+pub async fn compose_video(String, String?, Options) -> Bool
 
-async fn generate_audio(String, Options) -> Bool
+pub async fn generate_audio(String, Options) -> Bool
 
-async fn generate_slides(String, String, Options) -> Bool
+pub async fn generate_slides(String, String, Options) -> Bool
 
-fn get_course_name_from_path(String) -> String
+pub fn get_course_name_from_path(String) -> String
 
-async fn get_video_duration(String) -> Double
+pub async fn get_video_duration(String) -> Double
 
-async fn hash_file(String) -> String
+pub async fn hash_file(String) -> String
 
-async fn parse_file(String, String) -> Bool
+pub async fn parse_file(String, String) -> Bool
 
-fn target_dir(String) -> String
+pub fn target_dir(String) -> String
 
 // Errors
 
@@ -37,9 +37,8 @@ pub struct Options {
   theme : String
   engine : String
 }
-fn Options::new(String, Int, String, Bool, Bool, Double, String?) -> Self
+pub fn Options::new(String, Int, String, Bool, Bool, Double, String?) -> Self
 
 // Type aliases
 
 // Traits
-

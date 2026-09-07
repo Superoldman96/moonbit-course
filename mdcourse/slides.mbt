@@ -129,7 +129,7 @@ async fn get_absolute_path(path : String) -> String {
     let cwd = @process.collect_output("pwd", [])
     match cwd {
       (0, stdout, _) => {
-        let dir = stdout.text().trim(char_set=" \t\n").to_string()
+        let dir = stdout.text().trim(char_set=" \t\n").to_owned()
         dir + "/" + path
       }
       _ => path // Fallback to relative
@@ -178,12 +178,12 @@ fn get_pdf_filename(input_file : String) -> String {
   let mut result = input_file[:]
   if result.has_suffix(".mbt.md") {
     let len = result.length()
-    result = try! result[0:len - 7]
+    result = result[0:len - 7]
   } else if result.has_suffix(".md") {
     let len = result.length()
-    result = try! result[0:len - 3]
+    result = result[0:len - 3]
   }
-  result.to_string() + ".pdf"
+  result.to_owned() + ".pdf"
 }
 
 ///|
@@ -213,10 +213,6 @@ async fn list_slide_files(slides_dir : String) -> Array[String] {
 /// pdftoppm generates: slide-1.png, slide-2.png, ..., slide-10.png (no leading zeros)
 /// We want: slide-001.png, slide-002.png, ..., slide-010.png (3-digit padding)
 async fn rename_slides(slides_dir : String) -> Unit {
-  struct SlideFile {
-    name : String
-    num : Int
-  }
   let new_entries : Array[SlideFile] = []
 
   // Read directory and find pdftoppm-generated files
@@ -231,24 +227,19 @@ async fn rename_slides(slides_dir : String) -> Unit {
     // Extract the number from the filename
     let parts : Array[String] = []
     for view in entry.split("-") {
-      parts.push(view.to_string())
+      parts.push(view.to_owned())
     }
     if parts.length() == 2 && parts[0] == "slide" {
       let num_part = parts[1]
       if num_part.has_suffix(".png") {
-        let num_str = num_part[0:num_part.length() - 4].to_string() catch {
-          _ => continue
-        }
+        let num_str = num_part[0:num_part.length() - 4].to_owned()
         // Only accept 1-2 digit numbers (pdftoppm format)
         // Skip 3-digit numbers (already renamed files)
         if num_str.length() > 2 {
           continue
         }
-        let parse_result = try? @strconv.parse_int(num_str)
-        match parse_result {
-          Ok(num) => new_entries.push({ name: entry, num })
-          Err(_) => ()
-        }
+        let num = @string.parse_int(num_str) catch { _ => continue }
+        new_entries.push({ name: entry, num, })
       }
     }
   }
@@ -276,4 +267,10 @@ async fn rename_slides(slides_dir : String) -> Unit {
   println(
     "   [+] Renamed \{new_entries.length()} slide images to standard format",
   )
+}
+
+///|
+priv struct SlideFile {
+  name : String
+  num : Int
 }

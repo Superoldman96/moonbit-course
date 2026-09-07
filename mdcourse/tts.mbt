@@ -33,7 +33,7 @@ pub async fn generate_audio(output_dir : String, options : Options) -> Bool {
   println("Generating audio...")
 
   // 1. Get environment variables
-  let env_vars = @sys.get_env_vars()
+  let env_vars = @env.get_env_vars()
   guard env_vars.get("TTS_KEY") is Some(tts_key) else {
     println("   [ERROR] TTS_KEY environment variable not set")
     println("   Please set TTS_KEY and TTS_REGION:")
@@ -71,12 +71,12 @@ pub async fn generate_audio(output_dir : String, options : Options) -> Bool {
     // Add to task list
     let audio_file = slide_audio_path(output_dir, slide.id)
     let ssml_file = slide_ssml_path(output_dir, slide.id)
-    tasks.push({ slide, audio_file, meta_file, ssml_file })
+    tasks.push({ slide, audio_file, meta_file, ssml_file, })
   }
 
   // 4. Prepare tasks for videos that need audio generation
   // Group videos by slide to track indices
-  let videos_by_slide : Map[String, Array[(Int, VideoSegment)]] = {}
+  let videos_by_slide : Map[String, Array[(Int, VideoSegment)]] = Map([])
   for video in manifest.videos {
     if !video.has_audio {
       continue
@@ -111,7 +111,7 @@ pub async fn generate_audio(output_dir : String, options : Options) -> Bool {
         output_dir, slide_id, video_index,
       )
       let ssml_file = video_ssml_path_indexed(output_dir, slide_id, video_index)
-      tasks.push({ slide: video_as_slide, audio_file, meta_file, ssml_file })
+      tasks.push({ slide: video_as_slide, audio_file, meta_file, ssml_file, })
     }
   }
 
@@ -123,7 +123,7 @@ pub async fn generate_audio(output_dir : String, options : Options) -> Bool {
   let results : Array[Result[AudioGenResult, String]] = []
   @async.with_task_group(fn(tg) {
     for task in tasks {
-      tg.spawn_bg(fn() {
+      tg.spawn_bg(async fn() {
         let result = generate_single_audio(
           task.slide.id,
           task.slide.ssml_hash,
@@ -184,9 +184,9 @@ async fn generate_single_audio(
   match synthesize_speech_simple(full_ssml, audio_file, tts_key, tts_region) {
     Ok(duration) => {
       // Save metadata
-      let meta : AudioMeta = { duration, hash: ssml_hash }
+      let meta : AudioMeta = { duration, hash: ssml_hash, }
       write_file(meta_file, Json::stringify(meta.to_json()))
-      Ok({ slide_id, duration })
+      Ok({ slide_id, duration, })
     }
     Err(error) => Err("slide-\{slide_id}: Failed - \{error}")
   }
@@ -221,15 +221,17 @@ async fn synthesize_speech_simple(
 ) -> Result[Double, String] {
   // Connect to Azure TTS endpoint
   let host = "\{tts_region}.tts.speech.microsoft.com"
-  let headers = {
+  let headers : Map[@http.CaseInsensitiveString, String] = {
     "Ocp-Apim-Subscription-Key": tts_key,
     "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
     "User-Agent": "mdcourse-moonbit/0.1.0",
   }
-  let client = @http.Client::connect(host, headers~, protocol=Https)
+  let client = @http.Client("https://\{host}", headers~)
 
   // POST SSML to Azure TTS API
-  let extra_headers = { "Content-Type": "application/ssml+xml" }
+  let extra_headers : Map[@http.CaseInsensitiveString, String] = {
+    "Content-Type": "application/ssml+xml",
+  }
   let response = client.post(
     "/cognitiveservices/v1",
     ssml, // String implements Data trait
@@ -248,7 +250,7 @@ async fn synthesize_speech_simple(
   client.close()
 
   // Save WAV file
-  @fs.write_file(output_file, audio_bytes, create=0o644)
+  @fs.write_file(output_file, audio_bytes, permission=0o644)
 
   // Calculate duration from WAV header
   let duration = get_wav_duration(audio_bytes)
@@ -262,3 +264,6 @@ fn parse_manifest_full(json_str : String) -> Manifest {
     e => abort("JSON parse error: \{e}")
   }
 }
+
+///|
+extend AudioMeta with ToJson::{to_json}

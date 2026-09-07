@@ -4,7 +4,7 @@
 /// Compute SHA-256 hash of a string
 fn hash_content(content : String) -> String {
   let digest = @sha256.Digest::new()
-  let bytes = @encoding/utf8.encode(content)
+  let bytes = @utf8.encode(content)
   for b in bytes {
     digest.write(b)
   }

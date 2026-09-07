@@ -150,7 +150,7 @@ async fn has_audio_stream(video_path : String) -> Bool {
     return false
   }
   let output = stdout.text().trim(char_set=" \t\n")
-  output.to_string() == "audio"
+  output.to_owned() == "audio"
 }
 
 ///|
@@ -165,7 +165,7 @@ pub async fn get_video_duration(video_path : String) -> Double {
     return 0.0
   }
   let duration_str = stdout.text().trim(char_set=" \t\n")
-  @strconv.parse_double(duration_str.to_string()) catch {
+  @string.parse_double(duration_str.to_owned()) catch {
     _ => 0.0
   }
 }

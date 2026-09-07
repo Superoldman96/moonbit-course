@@ -96,19 +96,19 @@ priv struct Resolution {
 /// Parse resolution preset to width and height
 fn parse_resolution(preset : String) -> Resolution {
   match preset {
-    "4k" | "4K" => { width: 3840, height: 2160 }
-    "1440p" | "1440P" => { width: 2560, height: 1440 }
-    "1080p" | "1080P" => { width: 1920, height: 1080 }
-    "720p" | "720P" => { width: 1280, height: 720 }
-    "480p" | "480P" => { width: 854, height: 480 }
-    _ => { width: 1920, height: 1080 } // default to 1080p
+    "4k" | "4K" => { width: 3840, height: 2160, }
+    "1440p" | "1440P" => { width: 2560, height: 1440, }
+    "1080p" | "1080P" => { width: 1920, height: 1080, }
+    "720p" | "720P" => { width: 1280, height: 720, }
+    "480p" | "480P" => { width: 854, height: 480, }
+    _ => { width: 1920, height: 1080, } // default to 1080p
   }
 }
 
 ///|
 /// Get resource directory (either MDCOURSE_DIR env var or current directory)
 fn get_resource_dir() -> String {
-  match @sys.get_env_vars().get("MDCOURSE_DIR") {
+  match @env.get_env_vars().get("MDCOURSE_DIR") {
     Some(dir) => dir
     None => "."
   }

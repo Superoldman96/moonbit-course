@@ -438,7 +438,7 @@ fn generate_concat_list(segment_files : Array[String]) -> String {
     // Extract just the filename from the full path
     let parts : Array[String] = []
     for view in file.split("/") {
-      parts.push(view.to_string())
+      parts.push(view.to_owned())
     }
     let filename = if parts.length() > 0 {
       parts[parts.length() - 1]
@@ -565,6 +565,9 @@ async fn save_segment_metadata(
   content_hash : String,
   audio_hash : String,
 ) -> Unit {
-  let meta : SegmentMeta = { duration, content_hash, audio_hash }
+  let meta : SegmentMeta = { duration, content_hash, audio_hash, }
   write_file(meta_file, Json::stringify(meta.to_json()))
 }
+
+///|
+extend SegmentMeta with ToJson::{to_json}

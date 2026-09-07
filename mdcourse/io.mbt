@@ -10,7 +10,7 @@ async fn read_file(path : String) -> String {
 ///|
 /// Write string to file
 async fn write_file(path : String, content : String) -> Unit {
-  @fs.write_file(path, @encoding/utf8.encode(content), create=0o644)
+  @fs.write_file(path, @utf8.encode(content), permission=0o644)
 }
 
 ///|
@@ -19,7 +19,7 @@ async fn create_dir_all(path : String) -> Unit {
   // Split path and create each level
   let parts : Array[String] = []
   for view in path.split("/") {
-    parts.push(view.to_string())
+    parts.push(view.to_owned())
   }
   let mut current = ""
   for part in parts {
@@ -45,7 +45,7 @@ async fn remove_file(path : String) -> Unit {
 fn basename(path : String) -> String {
   let parts : Array[String] = []
   for view in path.split("/") {
-    parts.push(view.to_string())
+    parts.push(view.to_owned())
   }
   if parts.length() == 0 {
     return ""

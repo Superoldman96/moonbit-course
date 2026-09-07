@@ -1,0 +1,13 @@
+import {
+  "Milky2018/mdcourse",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+  "moonbitlang/async",
+  "TheWaWaR/clap",
+}
+
+pkgtype(kind: "executable")
+
+options(
+  "bin-name": "mdcourse",
+)
